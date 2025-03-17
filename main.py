@@ -76,6 +76,13 @@ def flood_fill(r, c):
                 if 0 <= nr < ROWS and 0 <= nc < COLS:
                     flood_fill(nr, nc)
 
+def check_win():
+    for r in range(ROWS):
+        for c in range(COLS):
+            if not revealed[r][c] and board[r][c] != -1:
+                return False
+    return True
+
 #Game Loop
 running = True
 while running:
@@ -93,6 +100,9 @@ while running:
                     flood_fill(row, col)
                 else:
                     revealed[row][col] = True
+                if check_win():
+                    print("You win!")
+                    running = False
             elif event.button == 3:
                 flagged[row][col] = not flagged[row][col]
 

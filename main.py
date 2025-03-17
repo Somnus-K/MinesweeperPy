@@ -3,17 +3,15 @@ import random
 
 pygame.init()
 
+#Constants
 WIDTH, HEIGHT = 800, 800
 ROWS, COLS = 10, 10
-#CELL_SIZE = WIDTH // COLS
+CELL_SIZE = 50
 MINE_COUNT = 15
-#
 WHITE = (255, 255, 255)
-#BLACK = (0, 0, 0)
 GREY = (128, 128, 128)
-#RED = (255, 0, 0)
 
-#Images
+#Assets Loading
 images = {
     "covered": pygame.image.load("Assets/covered.png"),
     "flag": pygame.image.load("Assets/flag.png"),
@@ -29,7 +27,6 @@ images = {
     "8": pygame.image.load("Assets/8.png")
 }
 
-CELL_SIZE = 50
 
 for key in images:
     images[key] = pygame.transform.scale(images[key], (CELL_SIZE, CELL_SIZE))
@@ -43,11 +40,12 @@ board = [[0 for _ in range(COLS)] for _ in range(ROWS)]
 revealed = [[False for _ in range(COLS)] for _ in range(ROWS)]
 flagged = [[False for _ in range(COLS)] for _ in range(ROWS)]
 
+#Mine Generation for Board
 mines = set(random.sample(range(ROWS * COLS), MINE_COUNT))
 for mine in mines:
     row, col = divmod(mine, COLS)
     board[row][col] = -1
-
+#Counts adjacent mines
 def count_mines(r, c):
     count = 0
     for dr in [-1, 0, 1]:
@@ -62,6 +60,22 @@ for r in range(ROWS):
         if board[r][c] != -1:
             board[r][c] = count_mines(r, c)
 
+def flood_fill(r, c):
+    """Recursively reveals all 0 tiles and their neighbors"""
+    if not 0 <= r < ROWS and 0 <= c < COLS:
+        return
+    if revealed[r][c] or flagged[r][c]:
+        return
+    if board[r][c] == -1:
+        return
+    revealed[r][c] = True
+    if board [r][c] == 0:
+        for dr in [-1, 0, 1]:
+            for dc in [-1, 0, 1]:
+                nr, nc = r + dr, c + dc
+                if 0 <= nr < ROWS and 0 <= nc < COLS:
+                    flood_fill(nr, nc)
+
 #Game Loop
 running = True
 while running:
@@ -75,7 +89,10 @@ while running:
             col, row = x // CELL_SIZE, y // CELL_SIZE
 
             if event.button == 1 and not flagged[row][col]:
-                revealed[row][col] = True
+                if board[row][col] == 0:
+                    flood_fill(row, col)
+                else:
+                    revealed[row][col] = True
             elif event.button == 3:
                 flagged[row][col] = not flagged[row][col]
 

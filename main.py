@@ -40,24 +40,43 @@ pygame.display.set_caption("Minesweeper")
 
 #Board Generation
 board = [[0 for _ in range(COLS)] for _ in range(ROWS)]
-mines = set(random.sample(range(ROWS * COLS), MINE_COUNT))
+revealed = [[False for _ in range(COLS)] for _ in range(ROWS)]
+flagged = [[False for _ in range(COLS)] for _ in range(ROWS)]
 
+mines = set(random.sample(range(ROWS * COLS), MINE_COUNT))
 for mine in mines:
     row, col = divmod(mine, COLS)
     board[row][col] = -1
 
 #Game Loop
 running = True
-
 while running:
     screen.fill(WHITE)
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            x, y = pygame.mouse.get_pos()
+            col, row = x // CELL_SIZE, y // CELL_SIZE
+
+            if event.button == 1 and not flagged[row][col]:
+                revealed[row][col] = True
+            elif event.button == 3:
+                flagged[row][col] = not flagged[row][col]
+
     for r in range(ROWS):
         for c in range(COLS):
             x, y = c * CELL_SIZE, r * CELL_SIZE
-            screen.blit(images["covered"], (x, y))
+            if flagged[r][c]:
+                screen.blit(images["flag"], (x, y))
+            elif revealed[r][c]:
+                if board[r][c] == -1:
+                    screen.blit(images["mine"], (x, y))
+                else:
+                    pygame.draw.rect(screen, GREY, (x, y, CELL_SIZE, CELL_SIZE))
+            else:
+                screen.blit(images["covered"], (x, y))
     pygame.display.flip()
 
 pygame.quit()

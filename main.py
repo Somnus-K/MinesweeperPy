@@ -48,6 +48,20 @@ for mine in mines:
     row, col = divmod(mine, COLS)
     board[row][col] = -1
 
+def count_mines(r, c):
+    count = 0
+    for dr in [-1, 0, 1]:
+        for dc in [-1, 0, 1]:
+            nr, nc = r + dr, c + dc
+            if 0 <= nr < ROWS and 0 <= nc < COLS and board[nr][nc] == -1:
+                count += 1
+    return count
+
+for r in range(ROWS):
+    for c in range(COLS):
+        if board[r][c] != -1:
+            board[r][c] = count_mines(r, c)
+
 #Game Loop
 running = True
 while running:
@@ -74,7 +88,7 @@ while running:
                 if board[r][c] == -1:
                     screen.blit(images["mine"], (x, y))
                 else:
-                    pygame.draw.rect(screen, GREY, (x, y, CELL_SIZE, CELL_SIZE))
+                    screen.blit(images[str(board[r][c])], (x, y))
             else:
                 screen.blit(images["covered"], (x, y))
     pygame.display.flip()

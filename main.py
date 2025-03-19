@@ -1,5 +1,7 @@
 import pygame
 import random
+import sys
+import os
 
 pygame.init()
 
@@ -15,22 +17,31 @@ MINE_COUNT = 15
 WHITE = (255, 255, 255)
 GREY = (128, 128, 128)
 
+def resource_path(relative_path):
+    """ Get the absolute path for assets, compatible with PyInstaller """
+    if hasattr(sys, '_MEIPASS'):  # When running from an .exe
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
+
+#resource_path(
+
 #Assets Loading
 images = {
-    "covered": pygame.image.load("Assets/covered.png"),
-    "flag": pygame.image.load("Assets/flag.png"),
-    "mine": pygame.image.load("Assets/seamine.png"),
-    "mine_hit": pygame.image.load("Assets/clickedmine.png"),
-    "0": pygame.image.load("Assets/0.png"),
-    "1": pygame.image.load("Assets/1.png"),
-    "2": pygame.image.load("Assets/2.png"),
-    "3": pygame.image.load("Assets/3.png"),
-    "4": pygame.image.load("Assets/4.png"),
-    "5": pygame.image.load("Assets/5.png"),
-    "6": pygame.image.load("Assets/6.png"),
-    "7": pygame.image.load("Assets/7.png"),
-    "8": pygame.image.load("Assets/8.png")
+    "covered": pygame.image.load(resource_path("Assets/covered.png")),
+    "flag": pygame.image.load(resource_path("Assets/flag.png")),
+    "mine": pygame.image.load(resource_path("Assets/seamine.png")),
+    "mine_hit": pygame.image.load(resource_path("Assets/clickedmine.png")),
+    "0": pygame.image.load(resource_path("Assets/0.png")),
+    "1": pygame.image.load(resource_path("Assets/1.png")),
+    "2": pygame.image.load(resource_path("Assets/2.png")),
+    "3": pygame.image.load(resource_path("Assets/3.png")),
+    "4": pygame.image.load(resource_path("Assets/4.png")),
+    "5": pygame.image.load(resource_path("Assets/5.png")),
+    "6": pygame.image.load(resource_path("Assets/6.png")),
+    "7": pygame.image.load(resource_path("Assets/7.png")),
+    "8": pygame.image.load(resource_path("Assets/8.png"))
 }
+
 
 
 for key in images:

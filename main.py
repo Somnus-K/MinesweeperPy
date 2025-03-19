@@ -5,7 +5,7 @@ pygame.init()
 
 #Constants
 
-HEADER = 100
+HEADER = 50
 ROWS, COLS = 10, 10
 CELL_SIZE = 50
 WIDTH, HEIGHT = (CELL_SIZE * ROWS), (CELL_SIZE * COLS) + HEADER
@@ -20,6 +20,7 @@ images = {
     "covered": pygame.image.load("Assets/covered.png"),
     "flag": pygame.image.load("Assets/flag.png"),
     "mine": pygame.image.load("Assets/seamine.png"),
+    "mine_hit": pygame.image.load("Assets/clickedmine.png"),
     "0": pygame.image.load("Assets/0.png"),
     "1": pygame.image.load("Assets/1.png"),
     "2": pygame.image.load("Assets/2.png"),
@@ -101,7 +102,10 @@ def draw_board():
                 screen.blit(images["flag"], (x, y))
             elif revealed[r][c]:
                 if board[r][c] == -1:
-                    screen.blit(images["mine"], (x, y))
+                    if (r, c) == clicked_mine:
+                        screen.blit(images["mine_hit"], (x, y))
+                    else:
+                        screen.blit(images["mine"], (x, y))
                 else:
                     screen.blit(images[str(board[r][c])], (x, y))
             else:
@@ -127,6 +131,8 @@ def reset_game():
 
 start_time = pygame.time.get_ticks()
 font = pygame.font.Font(None, 36)
+
+clicked_mine = None
 
 #Game Loop
 running = True
@@ -162,6 +168,7 @@ while running:
 
             if event.button == 1 and not flagged[row][col]:
                 if board[row][col] == -1:
+                    clicked_mine = (row, col)
                     reveal_mines()
                     print("Game Over.")
                     draw_board()

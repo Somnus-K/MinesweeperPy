@@ -9,6 +9,8 @@ HEADER = 100
 ROWS, COLS = 10, 10
 CELL_SIZE = 50
 WIDTH, HEIGHT = (CELL_SIZE * ROWS), (CELL_SIZE * COLS) + HEADER
+BUTTON_WIDTH, BUTTON_HEIGHT = 80, 40
+restart_button = pygame.Rect(WIDTH // 2 - BUTTON_WIDTH // 2, 10, BUTTON_WIDTH, BUTTON_HEIGHT)
 MINE_COUNT = 15
 WHITE = (255, 255, 255)
 GREY = (128, 128, 128)
@@ -105,6 +107,24 @@ def draw_board():
             else:
                 screen.blit(images["covered"], (x, y))
 
+def reset_game():
+    global board, revealed, flagged, mines, start_time
+    board = [[0 for _ in range(COLS)] for _ in range(ROWS)]
+    revealed = [[False for _ in range(COLS)] for _ in range(ROWS)]
+    flagged = [[False for _ in range(COLS)] for _ in range(ROWS)]
+
+    mines = set(random.sample(range(ROWS * COLS), MINE_COUNT))
+    for mine in mines:
+        row, col = divmod(mine, COLS)
+        board[row][col] = -1
+
+    for r in range(ROWS):
+        for c in range(COLS):
+            if board[r][c] != -1:
+                board[r][c] = count_mines(r, c)
+
+    start_time = pygame.time.get_ticks()
+
 start_time = pygame.time.get_ticks()
 font = pygame.font.Font(None, 36)
 
@@ -121,11 +141,22 @@ while running:
     mine_text = font.render(str(f"Mines: {mines_remaining}"), True, GREY)
     screen.blit(time_text, (10, 10))
     screen.blit (mine_text, (WIDTH - mine_text.get_width() - 10, 10))
+
+    #Restart Button
+    pygame.draw.rect(screen, GREY, restart_button, border_radius=5)
+    restart_text = font.render("Reset", True, WHITE)
+    screen.blit(restart_text, (restart_button.x + 10, restart_button.y + 10))
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
             x, y = pygame.mouse.get_pos()
+
+            if restart_button.collidepoint(x, y):
+                reset_game()
+                continue
+
             if y >= HEADER:
                 row, col = (y - HEADER) // CELL_SIZE, x // CELL_SIZE
 
@@ -135,15 +166,15 @@ while running:
                     print("Game Over.")
                     draw_board()
                     pygame.display.flip()
-                    pygame.time.delay(2000)
-                    running = False
+                    #pygame.time.delay(2000)
+                    #running = False
                 if board[row][col] == 0:
                     flood_fill(row, col)
                 else:
                     revealed[row][col] = True
                 if check_win():
                     print("You win!")
-                    running = False
+                    #running = False
             elif event.button == 3:
                 if not revealed[row][col] and flags_placed < MINE_COUNT:
                     flagged[row][col] = not flagged[row][col]

@@ -7,12 +7,22 @@ pygame.init()
 
 #Constants
 
+#grid size, mine count
+DIFFICULTIES = {
+    "easy": (8, 8, 10),
+    "medium": (16, 16, 40),
+    "hard": (16, 30, 99)
+}
 HEADER = 50
 ROWS, COLS = 10, 10
-CELL_SIZE = 50
+CELL_SIZE = 60
 WIDTH, HEIGHT = (CELL_SIZE * ROWS), (CELL_SIZE * COLS) + HEADER
-BUTTON_WIDTH, BUTTON_HEIGHT = 80, 40
-restart_button = pygame.Rect(WIDTH // 2 - BUTTON_WIDTH // 2, 10, BUTTON_WIDTH, BUTTON_HEIGHT)
+BUTTON_WIDTH = max(80, WIDTH // 10)
+BUTTON_HEIGHT = 40
+reset_button_x = WIDTH // 2 - BUTTON_WIDTH - 10  # Left of center
+menu_button_x = WIDTH // 2 + 10  # Right of center
+reset_button = pygame.Rect(reset_button_x, 5, BUTTON_WIDTH, BUTTON_HEIGHT)
+menu_button = pygame.Rect(menu_button_x, 5, BUTTON_WIDTH, BUTTON_HEIGHT)
 MINE_COUNT = 15
 WHITE = (255, 255, 255)
 GREY = (128, 128, 128)
@@ -22,8 +32,6 @@ def resource_path(relative_path):
     if hasattr(sys, '_MEIPASS'):  # When running from an .exe
         return os.path.join(sys._MEIPASS, relative_path)
     return os.path.join(os.path.abspath("."), relative_path)
-
-#resource_path(
 
 #Assets Loading
 images = {
@@ -43,12 +51,58 @@ images = {
 }
 
 
-
 for key in images:
     images[key] = pygame.transform.scale(images[key], (CELL_SIZE, CELL_SIZE))
 
-#Screen Setup
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
+def start_screen():
+    """Display the difficulty selection menu."""
+    screen.fill(WHITE)
+    font = pygame.font.Font(None, 50)
+    title_text = font.render("Select Difficulty", True, GREY)
+    screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, 50))
+
+    # Difficulty buttons
+    buttons = {}
+    button_y = 150
+    for difficulty in DIFFICULTIES:
+        button_rect = pygame.Rect(WIDTH // 2 - 100, button_y, 200, 50)
+        buttons[difficulty] = button_rect
+        pygame.draw.rect(screen, GREY, button_rect, border_radius=5)
+        text = font.render(difficulty, True, WHITE)
+        screen.blit(text, (button_rect.x + 40, button_rect.y + 10))
+        button_y += 80
+
+    pygame.display.flip()
+
+    # Wait for user to click a difficulty
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = pygame.mouse.get_pos()
+                for difficulty, rect in buttons.items():
+                    if rect.collidepoint(x, y):
+                        while pygame.mouse.get_pressed()[0]:
+                            pygame.event.pump()
+                        pygame.event.clear()
+                        pygame.time.delay(100)
+                        return difficulty  # Return selected difficulty
+
+
+selected_difficulty = None
+
+# Show the start screen and get the chosen difficulty
+difficulty_choice = start_screen()
+ROWS, COLS, MINE_COUNT = DIFFICULTIES[difficulty_choice]  # Apply chosen difficulty
+
+# Recalculate screen size based on selection
+WIDTH, HEIGHT = (CELL_SIZE * COLS), (CELL_SIZE * ROWS) + HEADER
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+
+#Screen Setup
 pygame.display.set_caption("Minesweeper")
 
 #Board Generation
@@ -127,6 +181,7 @@ def reset_game():
     board = [[0 for _ in range(COLS)] for _ in range(ROWS)]
     revealed = [[False for _ in range(COLS)] for _ in range(ROWS)]
     flagged = [[False for _ in range(COLS)] for _ in range(ROWS)]
+    game_over = False
 
     mines = set(random.sample(range(ROWS * COLS), MINE_COUNT))
     for mine in mines:
@@ -140,29 +195,43 @@ def reset_game():
 
     start_time = pygame.time.get_ticks()
 
+
+
+
 start_time = pygame.time.get_ticks()
 font = pygame.font.Font(None, 36)
 
 clicked_mine = None
+
+game_over = False
 
 #Game Loop
 running = True
 while running:
     screen.fill(WHITE)
 
-    elapsed_time = (pygame.time.get_ticks() - start_time) // 1000
+    if not game_over:
+        elapsed_time = (pygame.time.get_ticks() - start_time) // 1000
     time_text = font.render(str(f"Time: {elapsed_time}s"), True, GREY)
 
     flags_placed = sum(row.count(True) for row in flagged)
     mines_remaining = MINE_COUNT - flags_placed
     mine_text = font.render(str(f"Mines: {mines_remaining}"), True, GREY)
     screen.blit(time_text, (10, 10))
-    screen.blit (mine_text, (WIDTH - mine_text.get_width() - 10, 10))
+    mine_counter_x = WIDTH - mine_text.get_width() - 10
+    screen.blit (mine_text, (mine_counter_x, 10))
+    menu_button.x = mine_counter_x - BUTTON_WIDTH - 10
+    reset_button.x = menu_button.x - BUTTON_WIDTH - 10
 
-    #Restart Button
-    pygame.draw.rect(screen, GREY, restart_button, border_radius=5)
-    restart_text = font.render("Reset", True, WHITE)
-    screen.blit(restart_text, (restart_button.x + 10, restart_button.y + 10))
+    # Draw Reset Button
+    pygame.draw.rect(screen, GREY, reset_button, border_radius=5)
+    reset_text = font.render("Reset", True, WHITE)
+    screen.blit(reset_text, (reset_button.x + 10, reset_button.y + 10))
+
+    # Draw Main Menu Button
+    pygame.draw.rect(screen, GREY, menu_button, border_radius=5)
+    menu_text = font.render("Menu", True, WHITE)
+    screen.blit(menu_text, (menu_button.x + 10, menu_button.y + 10))
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -170,7 +239,15 @@ while running:
         elif event.type == pygame.MOUSEBUTTONDOWN:
             x, y = pygame.mouse.get_pos()
 
-            if restart_button.collidepoint(x, y):
+            if reset_button.collidepoint(x, y):
+                reset_game()
+                continue
+
+            if menu_button.collidepoint(x, y):
+                difficulty_choice = start_screen()
+                ROWS, COLS, MINE_COUNT = DIFFICULTIES[difficulty_choice]
+                WIDTH, HEIGHT = (CELL_SIZE * COLS), (CELL_SIZE * ROWS) + HEADER
+                screen = pygame.display.set_mode((WIDTH, HEIGHT))
                 reset_game()
                 continue
 
@@ -182,6 +259,7 @@ while running:
                     clicked_mine = (row, col)
                     reveal_mines()
                     print("Game Over.")
+                    game_over = True
                     draw_board()
                     pygame.display.flip()
                     #pygame.time.delay(2000)
@@ -192,6 +270,7 @@ while running:
                     revealed[row][col] = True
                 if check_win():
                     print("You win!")
+                    game_over = True
                     #running = False
             elif event.button == 3:
                 if not revealed[row][col] and flags_placed < MINE_COUNT:

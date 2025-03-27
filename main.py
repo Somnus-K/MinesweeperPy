@@ -177,7 +177,7 @@ def draw_board():
                 screen.blit(images["covered"], (x, y))
 
 def reset_game():
-    global board, revealed, flagged, mines, start_time
+    global board, revealed, flagged, mines, start_time, game_over
     board = [[0 for _ in range(COLS)] for _ in range(ROWS)]
     revealed = [[False for _ in range(COLS)] for _ in range(ROWS)]
     flagged = [[False for _ in range(COLS)] for _ in range(ROWS)]
